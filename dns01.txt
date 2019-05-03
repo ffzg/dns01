@@ -1,0 +1,15 @@
+^ Useful commands
+
+rndc sync -- to flush files to disk
+
+
+
+^ update dynamic zones from command-line:
+
+.pre
+nsupdate -l -k /etc/bind/ddns.key
+
+update delete KC2-02.dhcp.pub.lib A
+update delete KC2-02.dhcp.pub.lib TXT
+send
+.pre
