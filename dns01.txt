@@ -13,3 +13,9 @@ update delete KC2-02.dhcp.pub.lib A
 update delete KC2-02.dhcp.pub.lib TXT
 send
 .pre
+
+^ check-names
+
+Hostnames with underscare generate errors, so you need to add to zone file:
+
+check-names ignore
