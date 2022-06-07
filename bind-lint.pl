@@ -14,7 +14,6 @@ my @zones;
 sub check_config {
 	my ( $config_file ) = @_;
 	warn "# check_config $config_file\n" if $debug;
-	return if $config_file =~ m/\.options/; # FIXME skip file we can't parse
 
 	my $parser = new BIND::Config::Parser;
 	 
@@ -51,7 +50,7 @@ sub check_config {
 
 }
 
-check_config( "/etc/bind/named.conf" );
+check_config( $ARGV[0] || "/etc/bind/named.conf" );
 
 foreach my $z ( @zones ) {
 	my ( $zone, $file ) = @$z;

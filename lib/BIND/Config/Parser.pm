@@ -12,6 +12,7 @@ use vars qw( $VERSION );
 $VERSION = '0.01';
 
 $::RD_AUTOACTION = q{ $item[1] };
+#$::RD_TRACE = 1;
 
 my $grammar = q{
 
@@ -31,7 +32,7 @@ my $grammar = q{
 		  { [ $item[1], $item[2], $item[4] ] }
 
 	value:
-		  /[\w.\/=-]+/ | /"[\w.\/ =-]+"/
+		  /[\*\w.+\/=-]+/ | /"[^"]+"/
 
 	eofile:
 		  /^\Z/
