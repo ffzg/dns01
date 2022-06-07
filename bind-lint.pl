@@ -4,6 +4,8 @@ use strict;
 
 # sudo apt install libparse-recdescent-perl
 
+my $debug = $ENV{DEBUG} || 0;
+
 use lib './lib';
 use BIND::Config::Parser;
 
@@ -11,7 +13,7 @@ my @zones;
 
 sub check_config {
 	my ( $config_file ) = @_;
-	warn "# check_config $config_file\n";
+	warn "# check_config $config_file\n" if $debug;
 	return if $config_file =~ m/\.options/; # FIXME skip file we can't parse
 
 	my $parser = new BIND::Config::Parser;
@@ -21,23 +23,21 @@ sub check_config {
 	 
 	# Set up callback handlers
 	$parser->set_open_block_handler( sub {
-		print "\t" x $indent, join( " ", @_ ), " {\n";
+		print "\t" x $indent, join( " ", @_ ), " {\n" if $debug;
 		$indent++;
-		warn "## $_[0]\n";
 		if ( $_[0] eq 'zone' ) {
 			$zone = $_[1];
 		}
 	} );
 	$parser->set_close_block_handler( sub {
 		$indent--;
-		print "\t" x $indent, "};\n";
+		print "\t" x $indent, "};\n" if $debug;
 	} );
 	$parser->set_statement_handler( sub {
-		print "\t" x $indent, join( " ", @_ ), ";\n";
+		print "\t" x $indent, join( " ", @_ ), ";\n" if $debug;
 		if ( $_[0] eq 'file' ) {
 			push @zones, [ $zone, $_[1] ];
 		}
-		warn "## statement $_[0] [$_[1]]\n";
 		if ( $_[0] eq 'include' ) {
 			my $file = $_[1];
 			$file =~ s/^"//;
@@ -55,6 +55,6 @@ check_config( "/etc/bind/named.conf" );
 
 foreach my $z ( @zones ) {
 	my ( $zone, $file ) = @$z;
-	print "# $zone $file\n";
+	print "# $zone $file\n" if $debug;
 	system "/usr/sbin/named-checkzone $zone $file";
 }
