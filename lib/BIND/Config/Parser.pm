@@ -22,7 +22,7 @@ my $grammar = q{
 		           }x> statement(s) eofile { $item[2] }
 
 	statement:
-		  simple | nested
+		  simple | nested | nested2
 
 	simple:
 		  value(s) ';'
@@ -31,8 +31,12 @@ my $grammar = q{
 		  value value(s?) '{' statement(s?) '}' ';'
 		  { [ $item[1], $item[2], $item[4] ] }
 
+	nested2:
+		  value value(s?) '{' statement(s?) '}' value '{' statement(s?) '}' ';'
+		  { [ $item[1], $item[2], $item[4] ] }
+
 	value:
-		  /[\*\w.+\/=-]+/ | /"[^"]+"/
+		  /[\*\w.:+\/=-]+/ | /"[^"]+"/
 
 	eofile:
 		  /^\Z/
