@@ -66,7 +66,7 @@ sub parse_file
 	my $namedconf = shift
 		 || die "Missing named.conf argument\n";
 
-	open NAMEDCONF, $namedconf
+	open( NAMEDCONF, $namedconf )
 		|| die "Can't open '$namedconf': $!\n";
 	my $text = join( "", <NAMEDCONF> );
 	close NAMEDCONF;
