@@ -3,7 +3,8 @@ use warnings;
 use strict;
 use autodie;
 
-# ./zone-comment-ips.pl /etc/bind/hosts.db ~dpavlin/ips/ips.free 2>&1 | less
+# ./zone-comment-ips.pl /etc/bind/hosts.db ~dpavlin/ips/ips.free > /tmp/zone.comment
+# vi /etc/bind/hosts.db /tmp/zone.comment -d
 
 my ( $zone, $ips ) = @ARGV;
 die "Usage: $0 zone ips" unless $zone && $ips;
