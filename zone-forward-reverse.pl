@@ -16,7 +16,7 @@ sub full_name {
 	$full_name .= $origin;
 	$full_name =~ s/\.\.+$/\./;
 	$full_name .= '.' unless $full_name =~ m/\.$/;
-	return $full_name;
+	return lc($full_name);
 }
 
 foreach my $zone_file ( qw(
@@ -47,3 +47,18 @@ foreach my $zone_file ( qw(
 }
 
 print "# zone = ",dump( $zone );
+
+foreach my $name ( keys %{ $zone->{A} } ) {
+	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
+		my $ptr = join('.', reverse split(/\./,$ip)) . '.in-addr.arpa.';
+		if ( exists $zone->{PTR}->{$ptr} ) {
+			if ( grep { $_ eq $name } @{ $zone->{PTR}->{$ptr} } ) {
+				print "OK $name $ip has $ptr\n";
+			} else {
+				print "ADDITIONAL $ptr IN PTR $name\n", "# ",dump( $zone->{PTR}->{$ptr} ), "\n";
+			}
+		} else {
+			print "MISSING $ptr IN PTR $name\n";
+		}
+	}
+}
