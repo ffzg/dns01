@@ -5,6 +5,8 @@ use autodie;
 
 use Data::Dump qw(dump);
 
+my $debug = $ENV{DEBUG} || 0;
+
 my $zone;
 
 my $origin;
@@ -28,7 +30,7 @@ foreach my $zone_file ( qw(
 	open(my $fh, '<', $zone_file);
 	while(<$fh>) {
 		chomp;
-		print "# $zone_file: $_\n";
+		print "# $zone_file: $_\n" if $debug;
 		if ( m/^\s*;/ || m/^$/ ) {
 			next;
 		} elsif ( m/^\s*\$ORIGIN\s(\S+)/ ) {
@@ -40,13 +42,13 @@ foreach my $zone_file ( qw(
 		if ( m/\s(A|CNAME|PTR)\s+(\S+)/ ) {
 			my ($in,$v) = ($1,$2);
 			push @{ $zone->{uc($in)}->{ full_name( $name ) } }, $in eq 'A' ? $v : full_name( $v );
-			print "++ $name $in $v\n";
+			print "++ $name $in $v\n" if $debug;
 		}
 	}
 
 }
 
-print "# zone = ",dump( $zone );
+print "# zone = ",dump( $zone ) if $debug;
 
 foreach my $name ( keys %{ $zone->{A} } ) {
 	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
