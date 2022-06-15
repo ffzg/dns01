@@ -25,6 +25,10 @@ foreach my $zone_file ( qw(
 /etc/bind/hosts.db
 /etc/bind/hosts.rev212
 /etc/bind/hosts.rev213
+/etc/bind/ffzg.unizg.hr.db
+/etc/bind/hosts-dhcp.db
+/etc/bind/hosts.rev214
+/etc/bind/hosts.rev215
 ) ) {
 
 	open(my $fh, '<', $zone_file);
@@ -61,6 +65,18 @@ foreach my $name ( keys %{ $zone->{A} } ) {
 			}
 		} else {
 			print "MISSING $ptr IN PTR $name\n";
+		}
+	}
+}
+
+foreach my $name ( keys %{ $zone->{CNAME} } ) {
+	foreach my $t ( @{ $zone->{CNAME}->{$name} } ) {
+		if ( exists $zone->{A}->{$t} ) {
+			print "OK CNAME $name -> A $t\n";
+		} elsif ( exists $zone->{CNAME}->{$t} ) {
+			print "OK CNAME $name -> CNAME $t\n";
+		} else {
+			print "CNAME $name MISSING $t\n";
 		}
 	}
 }
