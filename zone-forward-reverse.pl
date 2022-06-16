@@ -8,6 +8,7 @@ use Data::Dump qw(dump);
 my $debug = $ENV{DEBUG} || 0;
 
 my $zone;
+my $stat;
 
 my $origin;
 my $name;
@@ -60,11 +61,14 @@ foreach my $name ( keys %{ $zone->{A} } ) {
 		if ( exists $zone->{PTR}->{$ptr} ) {
 			if ( grep { $_ eq $name } @{ $zone->{PTR}->{$ptr} } ) {
 				print "OK $name $ip has $ptr\n";
+				$stat->{ok}->{ptr}++;
 			} else {
 				print "ADDITIONAL $ptr IN PTR $name\n", "# ",dump( $zone->{PTR}->{$ptr} ), "\n";
+				$stat->{additional}->{ptr}++;
 			}
 		} else {
 			print "MISSING $ptr IN PTR $name\n";
+			$stat->{missing}->{ptr}++;
 		}
 	}
 }
@@ -73,10 +77,13 @@ foreach my $name ( keys %{ $zone->{CNAME} } ) {
 	foreach my $t ( @{ $zone->{CNAME}->{$name} } ) {
 		if ( exists $zone->{A}->{$t} ) {
 			print "OK CNAME $name -> A $t\n";
+			$stat->{ok}->{cname_a}++;
 		} elsif ( exists $zone->{CNAME}->{$t} ) {
 			print "OK CNAME $name -> CNAME $t\n";
+			$stat->{ok}->{cname_cname}++;
 		} else {
 			print "CNAME $name MISSING $t\n";
+			$stat->{missing}->{cname}++;
 		}
 	}
 }
@@ -85,10 +92,15 @@ foreach my $name ( keys %{ $zone->{PTR} } ) {
 	foreach my $t ( @{ $zone->{PTR}->{$name} } ) {
 		if ( exists $zone->{A}->{$t} ) {
 			print "OK PTR $name -> A $t\n";
+			$stat->{ok}->{ptr_a}++;
 		} elsif ( exists $zone->{CNAME}->{$t} ) {
 			print "OK PTR $name -> CNAME $t\n";
+			$stat->{ok}->{ptr_cname}++;
 		} else {
 			print "PTR $name EXTRA $t\n";
+			$stat->{extra}->{ptr}++;
 		}
 	}
 }
+
+print "# stat = ",dump($stat);
