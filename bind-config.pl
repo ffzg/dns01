@@ -13,3 +13,5 @@ check_config( $ARGV[0] || "/etc/bind/named.conf" );
 
 print "zones = ",dump( @zones );
 
+print "allow_update = ",dump( $BIND::Config::allow_update );
+print "key = ",dump( $BIND::Config::key );
