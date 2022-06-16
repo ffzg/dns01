@@ -3,6 +3,9 @@ use warnings;
 use strict;
 use autodie;
 
+use lib './lib';
+use BIND::Config qw( check_config @zones );
+
 use Data::Dump qw(dump);
 
 my $debug = $ENV{DEBUG} || 0;
@@ -22,15 +25,11 @@ sub full_name {
 	return lc($full_name);
 }
 
-foreach my $zone_file ( qw(
-/etc/bind/hosts.db
-/etc/bind/hosts.rev212
-/etc/bind/hosts.rev213
-/etc/bind/ffzg.unizg.hr.db
-/etc/bind/hosts-dhcp.db
-/etc/bind/hosts.rev214
-/etc/bind/hosts.rev215
-) ) {
+check_config( $ARGV[0] || "/etc/bind/named.conf" );
+
+foreach my $zone_name_file ( @zones ) {
+
+	my ( $zone_name, $zone_file ) = @$zone_name_file;
 
 	open(my $fh, '<', $zone_file);
 	while(<$fh>) {
