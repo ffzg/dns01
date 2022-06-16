@@ -37,7 +37,10 @@ sub check_config {
 	$parser->set_statement_handler( sub {
 		print "\t" x $indent, join( " ", @_ ), ";\n" if $debug;
 		if ( $_[0] eq 'file' ) {
-			push @zones, [ $zone, $_[1] ];
+			my $file = $_[1];
+			$file =~ s/^"//;
+			$file =~ s/"$//;
+			push @zones, [ $zone, $file ];
 		}
 		if ( $_[0] eq 'include' ) {
 			my $file = $_[1];
