@@ -80,3 +80,15 @@ foreach my $name ( keys %{ $zone->{CNAME} } ) {
 		}
 	}
 }
+
+foreach my $name ( keys %{ $zone->{PTR} } ) {
+	foreach my $t ( @{ $zone->{PTR}->{$name} } ) {
+		if ( exists $zone->{A}->{$t} ) {
+			print "OK PTR $name -> A $t\n";
+		} elsif ( exists $zone->{CNAME}->{$t} ) {
+			print "OK PTR $name -> CNAME $t\n";
+		} else {
+			print "PTR $name EXTRA $t\n";
+		}
+	}
+}
