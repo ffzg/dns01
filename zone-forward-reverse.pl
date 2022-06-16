@@ -13,7 +13,7 @@ my $origin;
 my $name;
 sub full_name {
 	my $full_name = shift;
-	return $full_name if $full_name =~ m/\.$/;
+	return lc($full_name) if $full_name =~ m/\.$/;
 	$full_name .= '.';
 	$full_name .= $origin;
 	$full_name =~ s/\.\.+$/\./;
