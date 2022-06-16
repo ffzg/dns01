@@ -54,7 +54,7 @@ foreach my $zone_name_file ( @zones ) {
 
 print "# zone = ",dump( $zone ) if $debug;
 
-foreach my $name ( keys %{ $zone->{A} } ) {
+foreach my $name ( sort keys %{ $zone->{A} } ) {
 	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
 		my $ptr = join('.', reverse split(/\./,$ip)) . '.in-addr.arpa.';
 		if ( exists $zone->{PTR}->{$ptr} ) {
@@ -72,7 +72,7 @@ foreach my $name ( keys %{ $zone->{A} } ) {
 	}
 }
 
-foreach my $name ( keys %{ $zone->{CNAME} } ) {
+foreach my $name ( sort keys %{ $zone->{CNAME} } ) {
 	foreach my $t ( @{ $zone->{CNAME}->{$name} } ) {
 		if ( exists $zone->{A}->{$t} ) {
 			print "OK CNAME $name -> A $t\n";
@@ -87,7 +87,7 @@ foreach my $name ( keys %{ $zone->{CNAME} } ) {
 	}
 }
 
-foreach my $name ( keys %{ $zone->{PTR} } ) {
+foreach my $name ( sort keys %{ $zone->{PTR} } ) {
 	foreach my $t ( @{ $zone->{PTR}->{$name} } ) {
 		if ( exists $zone->{A}->{$t} ) {
 			print "OK PTR $name -> A $t\n";
