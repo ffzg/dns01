@@ -5,33 +5,14 @@ use autodie;
 
 use Data::Dump qw(dump);
 
+use lib './lib';
+use DHCPD::Leases qw(parse_leases);
+
 my $debug = $ENV{DEBUG} || 0;
 
 $|=1 if $debug;
 
-my $data;
-my $lease;
-
-open(my $fh, '<', '/var/lib/dhcp/dhcpd.leases');
-while(<$fh>) {
-	chomp;
-	if ( m/(lease)\s+(\S+)\s\{/ ) {
-		$data->{$1} = $2;
-	} elsif ( m/\}/ ) {
-		$lease->{$data->{lease}} = $data if exists $data->{lease};
-		$data = undef;
-	} elsif ( m/^\s+(\w+)\s\d\s(.+);$/ ) { # dates
-		$data->{$1} = $2;
-	} elsif ( m/^\s+([\w\s]+)\s(\S+);$/ ) {
-		$data->{$1} = $2;
-	} elsif ( m/^\s+set\s(\S+)\s=\s"([^"]+)";$/ ) {
-		$data->{$1} = $2;
-	} elsif ( m/^\s+(\S+)\s"([^"]+)";$/ ) {
-		$data->{$1} = $2;
-	} else {
-		warn "IGNORE: ",dump($_),"\n" if $debug;
-	}
-}
+my $lease = parse_leases( '/var/lib/dhcp/dhcpd.leases' );
 
 foreach my $ip ( sort keys %$lease ) {
 	my $data = $lease->{$ip};
