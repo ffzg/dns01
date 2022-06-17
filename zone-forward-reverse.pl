@@ -5,10 +5,13 @@ use autodie;
 
 use lib './lib';
 use BIND::Config qw( check_config @zones );
+use DHCPD::Leases qw(parse_leases);
 
 use Data::Dump qw(dump);
 
 my $debug = $ENV{DEBUG} || 0;
+
+$|=1 if $debug;
 
 my $zone;
 my $stat;
@@ -52,12 +55,53 @@ foreach my $zone_name_file ( @zones ) {
 
 }
 
-print "# zone = ",dump( $zone ) if $debug;
+warn "# zone = ",dump( $zone ) if $debug;
+
+
+my $lease = parse_leases( '/var/lib/dhcp/dhcpd.leases' );
+warn "# lease = ",dump( $lease ) if $debug;
+
+my $dynamic_regex = '(' . join('|', keys %{ $BIND::Config::allow_update } ) . ')\.';
 
 foreach my $name ( sort keys %{ $zone->{A} } ) {
 	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
 		my $ptr = join('.', reverse split(/\./,$ip)) . '.in-addr.arpa.';
-		if ( exists $zone->{PTR}->{$ptr} ) {
+
+		if ( $name =~ m/$dynamic_regex/ ) {
+			$stat->{dynamic}->{count}++;
+			$stat->{dynamic}->{state}->{ $lease->{$ip}->{'binding state'} }++;
+			if ( exists $lease->{$ip} ) {
+
+				if ( $lease->{$ip}->{'binding state'} eq 'active' ) {
+					print "DYNAMIC OK $name A $ip\n";
+					$stat->{dynamic}->{ok}->{a}++;
+
+					if ( exists $zone->{PTR}->{$ptr} ) {
+						print "DYNAMIC OK $name PTR $ptr\n";
+						$stat->{dynamic}->{ok}->{ptr}++;
+					} else {
+						print "DYNAMIC MISSING $name PTR $ptr\n";
+						$stat->{dynamic}->{missing}->{ptr}++;
+					}
+				} else {
+					print "DYNAMIC EXTRA $name A $ip\n";
+					$stat->{dynamic}->{extra}->{a}++;
+
+					if ( exists $zone->{PTR}->{$ptr} ) {
+						print "DYNAMIC EXTRA $name PTR $ptr\n";
+						$stat->{dynamic}->{extra}->{ptr}++;
+					}
+				}
+			} else {
+				print "DYNAMIC EXTRA $name A $ip\n";
+				$stat->{dynamic}->{extra}->{a}++;
+				if ( exists $zone->{PTR}->{$ptr} ) {
+					print "DYNAMIC EXTRA $name PTR $ptr\n";
+					$stat->{dynamic}->{extra}->{ptr}++;
+				}
+			}
+
+		} elsif ( exists $zone->{PTR}->{$ptr} ) {
 			if ( grep { $_ eq $name } @{ $zone->{PTR}->{$ptr} } ) {
 				print "OK $name $ip has $ptr\n";
 				$stat->{ok}->{ptr}++;
@@ -71,6 +115,8 @@ foreach my $name ( sort keys %{ $zone->{A} } ) {
 		}
 	}
 }
+
+# FIXME check all ips from $lease, not only in zone files
 
 foreach my $name ( sort keys %{ $zone->{CNAME} } ) {
 	foreach my $t ( @{ $zone->{CNAME}->{$name} } ) {

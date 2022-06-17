@@ -8,6 +8,8 @@ our @EXPORT = qw( parse_leases );
 
 my $debug = $ENV{DEBUG} || 0;
 
+use Data::Dump qw(dump);
+
 sub parse_leases {
 	my $path = shift || '/var/lib/dhcp/dhcpd.leases';
 
@@ -17,6 +19,7 @@ sub parse_leases {
 	open(my $fh, '<', $path);
 	while(<$fh>) {
 		chomp;
+		next if m/^#/;
 		if ( m/(lease)\s+(\S+)\s\{/ ) {
 			$data->{$1} = $2;
 		} elsif ( m/\}/ ) {
