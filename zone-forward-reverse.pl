@@ -69,27 +69,54 @@ foreach my $name ( sort keys %{ $zone->{A} } ) {
 
 		if ( $name =~ m/$dynamic_regex/ ) {
 			$stat->{dynamic}->{count}++;
-			$stat->{dynamic}->{state}->{ $lease->{$ip}->{'binding state'} }++;
 			if ( exists $lease->{$ip} ) {
 
-				if ( $lease->{$ip}->{'binding state'} eq 'active' ) {
-					print "DYNAMIC OK $name A $ip\n";
-					$stat->{dynamic}->{ok}->{a}++;
+				my $lease_state = $lease->{$ip}->{'binding state'} || die "no binding state";
+				$stat->{dynamic}->{state}->{ $lease_state }++;
+
+				if ( $lease_state eq 'active' ) {
+					if ( ! exists $lease->{$ip}->{'ddns-fwd-name'} ) {
+						# no name in lease file
+						print "DYNAMIC OK $name A $ip (missing ddns-fwd-name)\n";
+						$stat->{dynamic}->{ok_no_ddns}->{a}++;
+					} else {
+						my $ddns = lc( $lease->{$ip}->{'ddns-fwd-name'} ) . '.';
+						if ( $ddns eq $name ) {
+							print "DYNAMIC OK $name A $ip\n";
+							$stat->{dynamic}->{ok}->{a}++;
+						} else {
+							print "DYNAMIC WRONG NAME $name != $ddns A $ip\n";
+							$stat->{dynamic}->{wrong}->{a}++;
+						}
+					}
 
 					if ( exists $zone->{PTR}->{$ptr} ) {
-						print "DYNAMIC OK $name PTR $ptr\n";
-						$stat->{dynamic}->{ok}->{ptr}++;
+						print "DYNAMIC EXISTS $name PTR $ptr\n";
+						$stat->{dynamic}->{exists}->{ptr}++;
+
+=for later
+						my $rddns = lc( $lease->{$ip}->{'ddns-rev-name'} );
+						foreach my $rname ( @{ $zone->{PTR}->{$ptr} } ) {
+							if ( $rname eq $rddns ) {	
+								print "DYNAMIC OK $rname PTR $ptr\n";
+								$stat->{dynamic}->{ok}->{ptr}++;
+							} else {
+								print "DYNAMIC EXTRA $rname != $rddns PTR $ptr\n";
+								$stat->{dynamic}->{extra}->{ptr}++;
+							}
+						}
+=cut
 					} else {
 						print "DYNAMIC MISSING $name PTR $ptr\n";
 						$stat->{dynamic}->{missing}->{ptr}++;
 					}
 				} else {
-					print "DYNAMIC EXTRA $name A $ip\n";
-					$stat->{dynamic}->{extra}->{a}++;
+					print "DYNAMIC EXTRA $name A $ip (lease state: $lease_state)\n";
+					$stat->{dynamic}->{extra}->{$lease_state}->{a}++;
 
 					if ( exists $zone->{PTR}->{$ptr} ) {
 						print "DYNAMIC EXTRA $name PTR $ptr\n";
-						$stat->{dynamic}->{extra}->{ptr}++;
+						$stat->{dynamic}->{extra}->{$lease_state}->{ptr}++;
 					}
 				}
 			} else {
@@ -101,13 +128,15 @@ foreach my $name ( sort keys %{ $zone->{A} } ) {
 				}
 			}
 
-		} elsif ( exists $zone->{PTR}->{$ptr} ) {
-			if ( grep { $_ eq $name } @{ $zone->{PTR}->{$ptr} } ) {
-				print "OK $name $ip has $ptr\n";
-				$stat->{ok}->{ptr}++;
-			} else {
-				print "ADDITIONAL $ptr IN PTR $name\n", "# ",dump( $zone->{PTR}->{$ptr} ), "\n";
-				$stat->{additional}->{ptr}++;
+		} elsif ( exists $zone->{PTR}->{$ptr} ) { # check reverse for name
+			foreach my $rname ( @{ $zone->{PTR}->{$ptr} } ) {
+				if ( $rname eq $name ) {
+					print "OK $name $ip has $ptr\n";
+					$stat->{ok}->{ptr}++;
+				} else {
+					print "ADDITIONAL $ptr IN PTR $rname != $name\n";
+					$stat->{additional}->{ptr}++;
+				}
 			}
 		} else {
 			print "MISSING $ptr IN PTR $name\n";
