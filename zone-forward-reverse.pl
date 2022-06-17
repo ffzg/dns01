@@ -50,6 +50,9 @@ foreach my $zone_name_file ( @zones ) {
 			my ($in,$v) = ($1,$2);
 			push @{ $zone->{uc($in)}->{ full_name( $name ) } }, $in eq 'A' ? $v : full_name( $v );
 			print "++ $name $in $v\n" if $debug;
+			if ( $in eq 'A' ) {
+				push @{ $zone->{_ip2name}->{$v} }, full_name( $name );
+			}
 		}
 	}
 
