@@ -32,6 +32,7 @@ sub check_config {
 	 
 	my $indent = 0;
 	my $zone;
+	my $type;
 	 
 	# Set up callback handlers
 	$parser->set_open_block_handler( sub {
@@ -57,7 +58,7 @@ sub check_config {
 		print "# set_statement_handler [$indent] ", join( "|", @_ ), ";\n" if $debug > 1;
 		if ( $_[0] eq 'file' ) {
 			my $file = strip_quotes( $_[1] );
-			push @zones, [ $zone, $file ];
+			push @zones, [ $zone, $file ] if $type eq 'master';
 		}
 		if ( $_[0] eq 'include' ) {
 			my $file = strip_quotes( $_[1] );
@@ -68,6 +69,9 @@ sub check_config {
 		}
 		if ( $_[0] eq 'algorithm' || $_[0] eq 'secret' ) {
 			$key->{ $key_name }->{$_[0]} = strip_quotes( $_[1] );
+		}
+		if ( $_[0] eq 'type' ) {
+			$type = $_[1];
 		}
 
 	} );
