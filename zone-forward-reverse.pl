@@ -68,6 +68,9 @@ foreach my $zone_name_file ( @zones ) {
 warn "# zone = ",dump( $zone ) if $debug;
 
 
+my @nsupdate_delete;
+
+
 foreach my $name ( sort keys %{ $zone->{A} } ) {
 	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
 		my $ptr = join('.', reverse split(/\./,$ip)) . '.in-addr.arpa.';
@@ -92,6 +95,7 @@ foreach my $name ( sort keys %{ $zone->{A} } ) {
 						} else {
 							print "DYNAMIC WRONG NAME $name != $ddns A $ip\n";
 							$stat->{dynamic}->{wrong}->{a}++;
+							push @nsupdate_delete,$name;
 						}
 					}
 
@@ -118,22 +122,26 @@ foreach my $name ( sort keys %{ $zone->{A} } ) {
 				} else {
 					print "DYNAMIC EXTRA $name A $ip (lease state: $lease_state)\n";
 					$stat->{dynamic}->{extra}->{$lease_state}->{a}++;
+					push @nsupdate_delete,$name;
 
 					if ( exists $zone->{PTR}->{$ptr} ) {
 						print "DYNAMIC EXTRA $name PTR $ptr\n";
 						$stat->{dynamic}->{extra}->{$lease_state}->{ptr}++;
+						push @nsupdate_delete,$ptr;
 					}
 				}
 			} else {
 				print "DYNAMIC EXTRA $name A $ip\n";
 				$stat->{dynamic}->{extra}->{a}++;
+				push @nsupdate_delete,$name;
 				if ( exists $zone->{PTR}->{$ptr} ) {
 					print "DYNAMIC EXTRA $name PTR $ptr\n";
 					$stat->{dynamic}->{extra}->{ptr}++;
+					push @nsupdate_delete,$ptr;
 				}
 			}
 
-		} elsif ( exists $zone->{PTR}->{$ptr} ) { # check reverse for name
+		} elsif ( exists $zone->{PTR}->{$ptr} ) { # check reverse for name for static IPs
 			foreach my $rname ( @{ $zone->{PTR}->{$ptr} } ) {
 				if ( $rname eq $name ) {
 					print "OK $name $ip has $ptr\n";
@@ -183,3 +191,7 @@ foreach my $name ( sort keys %{ $zone->{PTR} } ) {
 }
 
 print "# stat = ",dump($stat);
+
+open(my $fh, '>', '/tmp/nsupdate.delete');
+print $fh "$_\n" foreach @nsupdate_delete;
+close($fh);
