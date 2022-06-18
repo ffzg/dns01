@@ -36,6 +36,8 @@ while(<>) {
 
 warn "# update = ",dump($update) if $debug;
 
+print "server 127.0.0.1\n";
+
 foreach my $zone ( keys %$update ) {
 
 	print "zone $zone\n";
@@ -47,13 +49,18 @@ foreach my $zone ( keys %$update ) {
 	# key [hmac:] {keyname} {secret}
 	print "key $key_name ", $BIND::Config::key->{$key_name}->{secret}, "\n";
 
+	my $count = 0;
+
 	foreach my $name ( @{ $update->{$zone} } ) {
 		if ( $zone =~ m/\.arpa$/ ) {
 			print "delete $name PTR\n";
+			$count++;
 		} else {
 			print "delete $name A\n";
 			print "delete $name TXT\n";
+			$count++;
 		}
+		print "send\n" if $count % 1000 == 0; # prevent dns_request_createvia: ran out of space
 	}
 
 	print "send\n";
