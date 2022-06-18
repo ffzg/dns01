@@ -30,6 +30,13 @@ sub full_name {
 
 check_config( $ARGV[0] || "/etc/bind/named.conf" );
 
+
+my $lease = parse_leases( '/var/lib/dhcp/dhcpd.leases' );
+warn "# lease = ",dump( $lease ) if $debug;
+
+my $dynamic_regex = '(' . join('|', keys %{ $BIND::Config::allow_update } ) . ')\.';
+
+
 foreach my $zone_name_file ( @zones ) {
 
 	my ( $zone_name, $zone_file ) = @$zone_name_file;
@@ -43,15 +50,15 @@ foreach my $zone_name_file ( @zones ) {
 		} elsif ( m/^\s*\$ORIGIN\s(\S+)/ ) {
 			$origin = $1;
 		} elsif ( m/^(\S+)\s/ ) {
-			$name = $1;
+			$name = full_name( $1 );
 		}
 		
 		if ( m/\s(A|CNAME|PTR)\s+(\S+)/ ) {
 			my ($in,$v) = ($1,$2);
-			push @{ $zone->{uc($in)}->{ full_name( $name ) } }, $in eq 'A' ? $v : full_name( $v );
+			push @{ $zone->{uc($in)}->{ $name } }, $in eq 'A' ? $v : full_name( $v );
 			print "++ $name $in $v\n" if $debug;
 			if ( $in eq 'A' ) {
-				push @{ $zone->{_ip2name}->{$v} }, full_name( $name );
+				push @{ $zone->{_ip2name}->{ $name =~ m/$dynamic_regex/ ? 'dhcp' : 'static' }->{$v} }, $name;
 			}
 		}
 	}
@@ -60,11 +67,6 @@ foreach my $zone_name_file ( @zones ) {
 
 warn "# zone = ",dump( $zone ) if $debug;
 
-
-my $lease = parse_leases( '/var/lib/dhcp/dhcpd.leases' );
-warn "# lease = ",dump( $lease ) if $debug;
-
-my $dynamic_regex = '(' . join('|', keys %{ $BIND::Config::allow_update } ) . ')\.';
 
 foreach my $name ( sort keys %{ $zone->{A} } ) {
 	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
