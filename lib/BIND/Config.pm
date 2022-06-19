@@ -3,7 +3,7 @@ use warnings;
 use strict;
 
 our @ISA = qw( Exporter );
-our @EXPORT = qw( check_config @zones );
+our @EXPORT = qw( check_config @zones zone_local_ip );
 
 # sudo apt install libparse-recdescent-perl libnet-subnet-perl
 
@@ -122,6 +122,14 @@ sub check_config {
 	# Parse the file
 	$parser->parse_file( $config_file );
 
+}
+
+sub zone_local_ip {
+	my $zone = shift;
+	$zone =~ s/\.$//; # strip trailing dot
+	if ( exists $zone_local_ip->{$zone} ) {
+		return $zone_local_ip->{$zone}->[0];
+	}
 }
 
 1;

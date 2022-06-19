@@ -7,7 +7,7 @@ use autodie;
 # ./nsupdate-delete.pl /tmp/nsupdate.delete | nsupdate -v -d && /usr/sbin/rndc sync -clean
 
 use lib './lib';
-use BIND::Config qw( check_config @zones );
+use BIND::Config qw( check_config @zones zone_local_ip );
 
 use Data::Dump qw(dump);
 
@@ -48,6 +48,10 @@ foreach my $zone ( keys %$update ) {
 
 	# key [hmac:] {keyname} {secret}
 	print "key $key_name ", $BIND::Config::key->{$key_name}->{secret}, "\n";
+
+	if ( my $ip = zone_local_ip( $zone ) ) {
+		print "local $ip\n";
+	}
 
 	my $count = 0;
 
