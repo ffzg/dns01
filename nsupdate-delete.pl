@@ -62,7 +62,7 @@ foreach my $zone ( keys %$update ) {
 			print "delete $name TXT\n";
 			$count++;
 		}
-		print "send\n" if $count % 1000 == 0; # prevent dns_request_createvia: ran out of space
+		print "send\n" if $count % 10 == 0; # prevent dns_request_createvia: ran out of space
 	}
 
 	print "send\n";
