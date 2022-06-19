@@ -132,4 +132,11 @@ sub zone_local_ip {
 	}
 }
 
+sub zone_key_name_secret {
+    my $zone = shift;
+	$zone =~ s/\.$//; # strip trailing dot
+	my $key_name = $BIND::Config::allow_update->{$zone} || die "no zone $zone";
+	return ( $key_name, $BIND::Config::key->{$key_name}->{secret} );
+}
+
 1;

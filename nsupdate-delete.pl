@@ -42,12 +42,11 @@ foreach my $zone ( keys %$update ) {
 
 	print "zone $zone\n";
 
-	my $zone_no_dot = $zone;
-	$zone_no_dot =~ s/\.$//;
-	my $key_name = $BIND::Config::allow_update->{$zone_no_dot} || die "no zone $zone";
+	print "zone $zone\n";
 
+	my ( $key_name, $secret ) = BIND::Config::zone_key_name_secret( $zone );
 	# key [hmac:] {keyname} {secret}
-	print "key $key_name ", $BIND::Config::key->{$key_name}->{secret}, "\n";
+	print "key $key_name $secret\n";
 
 	if ( my $ip = zone_local_ip( $zone ) ) {
 		print "local $ip\n";
