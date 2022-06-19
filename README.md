@@ -38,3 +38,8 @@ sudo -u bind ./zone-forward-reverse.pl
 ## delete extra dynamic mappings
 
 ./nsupdate-delete.pl /tmp/nsupdate.delete | nsupdate -v -d && /usr/sbin/rndc sync -clean
+
+## generate one file per zone for update
+
+FILE=1 ./nsupdate-delete.pl /tmp/nsupdate.delete
+

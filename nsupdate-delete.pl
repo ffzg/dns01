@@ -38,7 +38,9 @@ warn "# update = ",dump($update) if $debug;
 
 foreach my $zone ( keys %$update ) {
 
-	print "zone $zone\n";
+	if ( $ENV{FILE} ) {
+		open(STDOUT, '>', "/tmp/nsupdate.zone.$zone");
+	}
 
 	print "zone $zone\n";
 
