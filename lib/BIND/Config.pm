@@ -5,17 +5,20 @@ use strict;
 our @ISA = qw( Exporter );
 our @EXPORT = qw( check_config @zones );
 
-# sudo apt install libparse-recdescent-perl
+# sudo apt install libparse-recdescent-perl libnet-subnet-perl
 
 my $debug = $ENV{DEBUG} || 0;
 
 use BIND::Config::Parser;
+use Net::Subnet;
+use Data::Dump qw(dump);
 
 our @zones;
 
 our $allow_update;
 my $key_name;
 our $key;
+our $zone_local_ip;
 
 sub strip_quotes {
 	my $t = shift || die "no argument";
@@ -24,23 +27,44 @@ sub strip_quotes {
 	return $t;
 }
 
+my @local_ips;
+
+open(my $ipaddr, '-|', 'ip addr');
+while(<$ipaddr>) {
+	if ( m/^\s+inet\s([\d\.]+)/ ) {
+		push @local_ips, $1;
+	}
+}
+close($ipaddr);
+
+warn "# local_ips = ",dump( \@local_ips ) if $debug;
+
+my $in_match_clients = 0;
+my @match_clients_ips;
+my $local_ip;
+
+my $indent = 0;
+
 sub check_config {
 	my ( $config_file ) = @_;
 	warn "# check_config $config_file\n" if $debug;
 
 	my $parser = new BIND::Config::Parser;
 	 
-	my $indent = 0;
 	my $zone;
 	my $type;
 	 
 	# Set up callback handlers
 	$parser->set_open_block_handler( sub {
 		print "\t" x $indent, join( " ", @_ ), " {\n" if $debug;
-		print "# set_open_block_handler [$indent] ", join( "|", @_ ), ";\n" if $debug > 1;
+		print "# set_open_block_handler [$indent] ", join( "|", @_ ), "\n" if $debug > 1;
 		$indent++;
 		if ( $_[0] eq 'zone' ) {
 			$zone = strip_quotes( $_[1] );
+			if ( $local_ip ) {
+				push @{ $zone_local_ip->{$zone} }, $local_ip;
+				warn "## $zone local_ip $local_ip" if $debug;
+			}
 		}
 		if ( $_[0] eq 'allow-update' ) {
 			$allow_update->{$zone} = 1;
@@ -48,14 +72,30 @@ sub check_config {
 		if ( $_[0] eq 'key' ) {
 			$key_name = strip_quotes( $_[1] );
 		}
+		if ( $_[0] eq 'match-clients' ) {
+			$in_match_clients = 1;
+			@match_clients_ips = ();
+		}
 	} );
 	$parser->set_close_block_handler( sub {
 		$indent--;
 		print "\t" x $indent, "};\n" if $debug;
+		print "# set_close_block_handler [$indent] ", join( "|", @_ ), "\n" if $debug > 1;
+		if ( $in_match_clients ) {
+			$in_match_clients = 0;
+			my $local_matcher = subnet_matcher @match_clients_ips;
+			foreach my $ip ( @local_ips ) {
+				if ( $local_matcher->( $ip ) ) {
+					$local_ip = $ip;
+					#warn "# match_clients_ips = ",dump( \@match_clients_ips ), " local_ip: $local_ip" if $debug;
+					last;
+				}
+			}
+		}
 	} );
 	$parser->set_statement_handler( sub {
 		print "\t" x $indent, join( " ", @_ ), ";\n" if $debug;
-		print "# set_statement_handler [$indent] ", join( "|", @_ ), ";\n" if $debug > 1;
+		print "# set_statement_handler [$indent] ", join( "|", @_ ), "\n" if $debug > 1;
 		if ( $_[0] eq 'file' ) {
 			my $file = strip_quotes( $_[1] );
 			push @zones, [ $zone, $file ] if $type eq 'master';
@@ -72,6 +112,9 @@ sub check_config {
 		}
 		if ( $_[0] eq 'type' ) {
 			$type = $_[1];
+		}
+		if ( $in_match_clients ) {
+			push @match_clients_ips, $_[0];
 		}
 
 	} );
