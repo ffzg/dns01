@@ -22,7 +22,7 @@ sub full_name {
 	my $full_name = shift;
 	return lc($full_name) if $full_name =~ m/\.$/;
 	$full_name .= '.';
-	$full_name .= $origin;
+	$full_name .= $origin if defined $origin;
 	$full_name =~ s/\.\.+$/\./;
 	$full_name .= '.' unless $full_name =~ m/\.$/;
 	return lc($full_name);
@@ -32,7 +32,7 @@ check_config( $ARGV[0] || "/etc/bind/named.conf" );
 
 
 my $lease = parse_leases( '/var/lib/dhcp/dhcpd.leases' );
-warn "# lease = ",dump( $lease ) if $debug;
+warn "# lease = ",dump( $lease ) if $debug > 3;
 
 my $dynamic_regex = '(' . join('|', keys %{ $BIND::Config::allow_update } ) . ')\.';
 
