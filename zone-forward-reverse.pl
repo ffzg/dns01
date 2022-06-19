@@ -55,10 +55,12 @@ foreach my $zone_name_file ( @zones ) {
 		
 		if ( m/\s(A|CNAME|PTR)\s+(\S+)/ ) {
 			my ($in,$v) = ($1,$2);
-			push @{ $zone->{uc($in)}->{ $name } }, $in eq 'A' ? $v : full_name( $v );
-			print "++ $name $in $v\n" if $debug;
-			if ( $in eq 'A' ) {
-				push @{ $zone->{_ip2name}->{ $name =~ m/$dynamic_regex/ ? 'dhcp' : 'static' }->{$v} }, $name;
+			if ( $name !~ m/^\@/ ) { # skip SOA
+				push @{ $zone->{uc($in)}->{ $name } }, $in eq 'A' ? $v : full_name( $v );
+				print "++ $name $in $v\n" if $debug;
+				if ( $in eq 'A' ) {
+					push @{ $zone->{_ip2name}->{ $name =~ m/$dynamic_regex/ ? 'dhcp' : 'static' }->{$v} }, $name;
+				}
 			}
 		}
 	}
