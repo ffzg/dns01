@@ -36,8 +36,6 @@ while(<>) {
 
 warn "# update = ",dump($update) if $debug;
 
-print "server 127.0.0.1\n";
-
 foreach my $zone ( keys %$update ) {
 
 	print "zone $zone\n";
@@ -49,6 +47,7 @@ foreach my $zone ( keys %$update ) {
 	print "key $key_name $secret\n";
 
 	if ( my $ip = zone_local_ip( $zone ) ) {
+		print "server $ip\n";
 		print "local $ip\n";
 	}
 
