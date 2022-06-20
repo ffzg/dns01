@@ -177,8 +177,11 @@ foreach my $name ( sort keys %{ $zone->{CNAME} } ) {
 	}
 }
 
+my @extra;
+
 foreach my $name ( sort keys %{ $zone->{PTR} } ) {
 	foreach my $t ( @{ $zone->{PTR}->{$name} } ) {
+		next if $t eq 'localhost.';
 		if ( exists $zone->{A}->{$t} ) {
 			print "OK PTR $name -> A $t\n";
 			$stat->{ok}->{ptr_a}++;
@@ -188,6 +191,7 @@ foreach my $name ( sort keys %{ $zone->{PTR} } ) {
 		} else {
 			print "PTR $name EXTRA $t\n";
 			$stat->{extra}->{ptr}++;
+			push @extra, $name;
 		}
 	}
 }
@@ -197,3 +201,8 @@ print "# stat = ",dump($stat);
 open(my $fh, '>', '/tmp/nsupdate.delete');
 print $fh "$_\n" foreach @nsupdate_delete;
 close($fh);
+
+open(my $fh, '>', '/tmp/zone.extra.ptr');
+print $fh "$_\n" foreach @extra;
+close($fh);
+
