@@ -43,3 +43,9 @@ sudo -u bind ./zone-forward-reverse.pl
 
 FILE=1 ./nsupdate-delete.pl /tmp/nsupdate.delete
 
+
+# cleanup static forward hosts file
+
+./zone-comment-ips.pl /etc/bind/hosts.db ~dpavlin/ips/ips.free > /tmp/zone.comment
+vi /etc/bind/hosts.db /tmp/zone.comment -d
+
