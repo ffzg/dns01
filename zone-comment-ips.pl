@@ -14,7 +14,7 @@ my $ip_regex;
 open(my $fh, '<', $ips);
 $ip_regex = join('|', map { chomp; s/^193.198.21//; $_; } <$fh>);
 $ip_regex = '\b193.198.21(' . $ip_regex . ')\b';
-$ip_regex =~ s/\./\./g;
+$ip_regex =~ s/\./\\./g; # quote dots
 warn "# ip_regex $ip_regex";
 
 open(my $z_in,  '<', $zone);
