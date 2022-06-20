@@ -44,8 +44,18 @@ sudo -u bind ./zone-forward-reverse.pl
 FILE=1 ./nsupdate-delete.pl /tmp/nsupdate.delete
 
 
-# cleanup static forward hosts file
+# cleanup static hosts file
 
-./zone-comment-ips.pl /etc/bind/hosts.db ~dpavlin/ips/ips.free > /tmp/zone.comment
+## forward
+
+This assumes that you have a list of free IPs which you want to remove
+
+./zone-comment.pl /etc/bind/hosts.db ~dpavlin/ips/ips.free > /tmp/zone.comment
 vi /etc/bind/hosts.db /tmp/zone.comment -d
 
+## reverse
+
+run ./zone-forward-reverse.pl to generate reverse mappings which are extra in
+file /tmp/zone.extra.ptr
+
+# ./zone-comment.pl /etc/bind/hosts.rev212 /tmp/zone.extra.ptr > /tmp/hosts.rev212
