@@ -34,12 +34,15 @@ check_config( $ARGV[0] || "/etc/bind/named.conf" );
 my $lease = parse_leases( '/var/lib/dhcp/dhcpd.leases' );
 warn "# lease = ",dump( $lease ) if $debug > 3;
 
-my $dynamic_regex = '(' . join('|', keys %{ $BIND::Config::allow_update } ) . ')\.';
-
+my $dynamic_regex = '(' . join('|', keys %{ $BIND::Config::allow_update } ) . ')\.?';
+warn "# dynamic_regex = $dynamic_regex\n" if $debug;
+my $zone_in_file; 
 
 foreach my $zone_name_file ( @zones ) {
 
 	my ( $zone_name, $zone_file ) = @$zone_name_file;
+
+	$zone_in_file->{$zone_name} = $zone_file;
 
 	open(my $fh, '<', $zone_file);
 	while(<$fh>) {
@@ -196,13 +199,40 @@ foreach my $name ( sort keys %{ $zone->{PTR} } ) {
 	}
 }
 
-print "# stat = ",dump($stat);
+print "# stat = ",dump($stat), "\n";
 
 open(my $fh, '>', '/tmp/nsupdate.delete');
 print $fh "$_\n" foreach @nsupdate_delete;
 close($fh);
 
+my $zone_regex = '(' . join('|', keys %$zone_in_file) . ')';
+my $zone_has_ptr;
+
 open(my $fh, '>', '/tmp/zone.extra.ptr');
-print $fh "$_\n" foreach @extra;
+foreach my $ptr ( @extra ) {
+	if ( $ptr =~ m/$zone_regex/ ) {
+		push @{ $zone_has_ptr->{$1} }, $ptr;
+	} else {
+		die "can't find zone for $ptr";
+	}
+	print $fh "$ptr\n";
+}
 close($fh);
 
+warn "# zone_has_ptr = ",dump( $zone_has_ptr ), "\n" if $debug;
+
+my $dir = '/tmp/zone.commented';
+mkdir $dir unless -e $dir;
+foreach my $zone ( keys %$zone_has_ptr ) {
+	next if $zone =~ m/$dynamic_regex/; # take only static zones
+	my $in = $zone_in_file->{$zone};
+	my $out = $in;
+	$out =~ s{^.*/([^/]+)$}{$dir/$1};
+	open(my $comment, '>', "$out.extra");
+	foreach my $ptr ( @{ $zone_has_ptr->{$zone} } ) {
+		print $comment "$ptr\n";
+	}
+	close($comment);
+	system "./zone-comment.pl $zone_in_file->{$zone} $out.extra > $out";
+	warn "# commented $in $out ", -s $out, " bytes\n";
+}
