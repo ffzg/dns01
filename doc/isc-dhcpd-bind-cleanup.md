@@ -17,7 +17,7 @@ and generate summary of all used and unused ips.
 # Remove unused static IP mappings from BIND
 
 Once we had list of free IPs, I wanted to comment them out
-in zone file. For this I wrote [zone-comment.pl](zone-comment.pl)
+in zone file. For this I wrote [zone-comment.pl](/zone-comment.pl)
 which takes zone file and list of IPs and comments them out, so I can
 compare zone files and if happy migrate them into zone file.
 
