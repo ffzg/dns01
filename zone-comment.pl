@@ -9,6 +9,8 @@ use autodie;
 my ( $zone, $ips ) = @ARGV;
 die "Usage: $0 zone ips\n" unless $zone && $ips;
 
+my $debug = $ENV{DEBUG} || 0;
+
 my $ip_regex;
 
 open(my $fh, '<', $ips);
@@ -47,13 +49,13 @@ my @ips = map {
 	$line; 
 } <$fh>;
 
-warn "# prefix [$prefix]\n";
-warn "# suffix [$suffix]\n";
+warn "# prefix [$prefix]\n" if $debug;
+warn "# suffix [$suffix]\n" if $debug;
 
 $ip_regex = join('|', map { chomp; s/^\Q$prefix\E//; s/\Q$suffix\E$//; $_; } @ips);
 $ip_regex = '\b' . $prefix . '(' . $ip_regex . ')' . $suffix;
 $ip_regex =~ s/\./\\./g; # quote dots
-warn "# ip_regex $ip_regex";
+warn "# ip_regex $ip_regex" if $debug;
 
 open(my $z_in,  '<', $zone);
 while(<$z_in>) {
