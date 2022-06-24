@@ -18,7 +18,7 @@ Install prerequisite perl modules
 sudo apt install libdata-dump-perl libparse-recdescent-perl libnet-subnet-perl
 
 All commands assume that you are running them with user which has
-priviledges to read key files (using sudo -u bind command).
+privileges to read key files (using sudo -u bind command).
 
 ## lint all bind zones
 
