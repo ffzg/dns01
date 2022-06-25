@@ -46,6 +46,11 @@ This assumes that you have a list of free IPs which you want to remove
 ./zone-comment.pl /etc/bind/hosts.db ~dpavlin/ips/ips.free > /tmp/zone.comment
 vi /etc/bind/hosts.db /tmp/zone.comment -d
 
+It will also create file `/tmp/zone.ips.static` with which you can check which IPs
+are reachable:
+
+cat /tmp/zone.ips.static | grep '193.198.21[23]' | xargs fping -u | tee /tmp/zone.ips.unreachable
+
 ## reverse
 
 This assumes that your forward mapping is correct and you want to fix

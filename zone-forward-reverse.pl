@@ -270,3 +270,8 @@ foreach my $zone ( keys %$zone_has_ptr ) {
 	system "./zone-comment.pl $zone_in_file->{$zone} $out.extra > $out";
 	warn "# commented $in $out ", -s $out, " bytes\n";
 }
+
+# dump static IP addresses
+open(my $ips, '>', '/tmp/zone.ips.static');
+print $ips join("\n", keys %{ $zone->{_ip2name}->{static} } );
+close($ips);
