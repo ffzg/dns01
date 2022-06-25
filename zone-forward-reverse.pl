@@ -39,6 +39,8 @@ my $dynamic_regex = '(' . join('|', keys %{ $BIND::Config::allow_update } ) . ')
 warn "# dynamic_regex = $dynamic_regex\n" if $debug;
 my $zone_in_file; 
 
+warn "# zones = ",dump( \@zones );
+
 foreach my $zone_name_file ( @zones ) {
 
 	my ( $zone_name, $zone_file ) = @$zone_name_file;
@@ -73,13 +75,34 @@ foreach my $zone_name_file ( @zones ) {
 
 }
 
+# remove local zones
+my @local_zones;
+foreach my $zone_file ( @zones ) {
+	my ( $zone_dot, undef ) = @$zone_file;
+	$zone_dot .= '.' unless $zone_dot =~ m/\.$/;
+	if ( exists $zone->{_subdomain_ns}->{ $zone_dot } ) {
+		delete $zone->{_subdomain_ns}->{ $zone_dot };
+		push @{ $zone->{_local_zones} }, $zone_dot;
+	}
+}
+delete $zone->{_subdomain_ns}->{ '' }; # localhost.
+
 warn "# zone = ",dump( $zone ) if $debug;
 
+my $local_zone_regex    = '(' . join('|',      @{ $zone->{_local_zones} }  ) . ')$';
+my $external_zone_regex = '(' . join('|', keys %{ $zone->{_subdomain_ns} } ) . ')$';
+$local_zone_regex =~ s/\./\\./g;
+$external_zone_regex =~ s/\./\\./g;
+
+warn "# local_zone_regex=$local_zone_regex\n# external_zone_regex=$external_zone_regex\n" if $debug;
 
 my @nsupdate_delete;
 
 
 foreach my $name ( sort keys %{ $zone->{A} } ) {
+
+	next if $name eq ''; # localhost.
+
 	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
 		my $ptr = join('.', reverse split(/\./,$ip)) . '.in-addr.arpa.';
 
@@ -185,19 +208,27 @@ foreach my $name ( sort keys %{ $zone->{CNAME} } ) {
 
 my @extra;
 
-foreach my $name ( sort keys %{ $zone->{PTR} } ) {
-	foreach my $t ( @{ $zone->{PTR}->{$name} } ) {
-		next if $t eq 'localhost.';
-		if ( exists $zone->{A}->{$t} ) {
-			print "OK PTR $name -> A $t\n";
+foreach my $ptr ( sort keys %{ $zone->{PTR} } ) {
+
+	foreach my $name ( @{ $zone->{PTR}->{$ptr} } ) {
+		next if $name eq 'localhost.';
+
+		if ( $name =~ m/$external_zone_regex/ || $name !~ m/$local_zone_regex/ ) {
+			print "EXTERNAL PTR $name\n";
+			push @{ $stat->{external_ptr} }, $name;
+			next;
+		}
+
+		if ( exists $zone->{A}->{$name} ) {
+			print "OK PTR $ptr -> A $name\n";
 			$stat->{ok}->{ptr_a}++;
-		} elsif ( exists $zone->{CNAME}->{$t} ) {
-			print "OK PTR $name -> CNAME $t\n";
-			$stat->{ok}->{ptr_cname}++;
+		} elsif ( exists $zone->{CNAME}->{$name} ) {
+			print "OK PTR $ptr -> CNAME $name\n";
+			$stat->{ok}->{ptr_cptr}++;
 		} else {
-			print "PTR $name EXTRA $t\n";
+			print "PTR $ptr EXTRA $name\n";
 			$stat->{extra}->{ptr}++;
-			push @extra, $name;
+			push @extra, $ptr;
 		}
 	}
 }
