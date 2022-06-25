@@ -25,6 +25,7 @@ sub full_name {
 	$full_name .= $origin if defined $origin;
 	$full_name =~ s/\.\.+$/\./;
 	$full_name .= '.' unless $full_name =~ m/\.$/;
+	$full_name =~ s/^\@\.//;
 	return lc($full_name);
 }
 
@@ -65,6 +66,8 @@ foreach my $zone_name_file ( @zones ) {
 					push @{ $zone->{_ip2name}->{ $name =~ m/$dynamic_regex/ ? 'dhcp' : 'static' }->{$v} }, $name;
 				}
 			}
+		} elsif ( m/\s(NS)\s+(\S+)/ ) {
+			push @{ $zone->{_subdomain_ns}->{$name} }, $2;
 		}
 	}
 
