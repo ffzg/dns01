@@ -49,7 +49,10 @@ vi /etc/bind/hosts.db /tmp/zone.comment -d
 It will also create file `/tmp/zone.ips.static` with which you can check which IPs
 are reachable:
 
-cat /tmp/zone.ips.static | grep '193.198.21[23]' | xargs fping -u | tee /tmp/zone.ips.unreachable
+./fping-arp.pl $( cat /tmp/zone.ips.static ) | grep incomplete | tee /tmp/zone.ips.unreachable
+
+It uses `fping-arp.pl` which will first fping hosts, and then check arp table to see if they
+have valid mac address since Windows hosts don't respond to ICMP.
 
 ## reverse
 
