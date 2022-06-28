@@ -26,4 +26,22 @@ compare zone files and if happy migrate them into zone file.
 vi /etc/bind/hosts.db /tmp/zone.comment -d
 ```
 
+# Check reverse zone files
+
+Once we have cleanup up forward zone file, we need to also update reverse
+mappings. For this, there is [zone-forward-reverse.pl](/zone-forward-reverse.pl)
+which does a lot, so let's step through everything.
+
+- read bind configuration and parse it
+- read dhcpd leases file
+- read zone files from bind
+- check A records, splitting then into static and dynamic (from dhcpd)
+- check CNAME records
+- check PTR records
+- generate `/tmp/nsupdate.delete` with dynamic records to delete with `nsupdate`
+- generate `/tmp/zone.extra.ptr` with extra PTR records
+- generate directory `/tmp/zone.commented` with commented zones based on data above
+- generate `/tmp/zone.ips.static` with list of static IPs
+
+
 
