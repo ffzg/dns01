@@ -26,6 +26,9 @@ die "no regex" unless @regex;
 my $ips_regex = '\b(' . join('|', @regex) . ')\b';
 warn "# ips_regex = $ips_regex" if $debug;
 
+my $tmp_file = '/dev/shm/fping-arp';
+open(my $tmp, '>', $tmp_file);
+
 open(my $arp, '-|', '/usr/sbin/arp -a');
 while(<$arp>) {
 	chomp;
@@ -33,5 +36,12 @@ while(<$arp>) {
 	my ( $hostname, $ip, undef, $mac ) = split(/\s/,$_);
 	$ip =~ s/^\(//;
 	$ip =~ s/\)$//;
-	print "$hostname $ip $mac\n" if $ip =~ m/$ips_regex/;
+	if ( $ip =~ m/$ips_regex/ ) {
+		print "$hostname $ip $mac\n";
+		print $tmp "$hostname $ip $mac\n";
+	}
 }
+close($arp);
+close($tmp);
+
+warn "# $tmp_file ", -s $tmp_file, " bytes created\n";
