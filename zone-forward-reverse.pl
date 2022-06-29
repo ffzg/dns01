@@ -240,12 +240,12 @@ print $fh "$_\n" foreach @nsupdate_delete;
 close($fh);
 
 my $zone_regex = '(' . join('|', keys %$zone_in_file) . ')';
-my $zone_has_ptr;
+my $zone_extra_ptr;
 
 open(my $fh, '>', '/tmp/zone.extra.ptr');
 foreach my $ptr ( @extra ) {
 	if ( $ptr =~ m/$zone_regex/ ) {
-		push @{ $zone_has_ptr->{$1} }, $ptr;
+		push @{ $zone_extra_ptr->{$1} }, $ptr;
 	} else {
 		die "can't find zone for $ptr";
 	}
@@ -253,17 +253,17 @@ foreach my $ptr ( @extra ) {
 }
 close($fh);
 
-warn "# zone_has_ptr = ",dump( $zone_has_ptr ), "\n" if $debug;
+warn "# zone_extra_ptr = ",dump( $zone_extra_ptr ), "\n" if $debug;
 
 my $dir = '/tmp/zone.commented';
 mkdir $dir unless -e $dir;
-foreach my $zone ( keys %$zone_has_ptr ) {
+foreach my $zone ( keys %$zone_extra_ptr ) {
 	next if $zone =~ m/$dynamic_regex/; # take only static zones
 	my $in = $zone_in_file->{$zone};
 	my $out = $in;
 	$out =~ s{^.*/([^/]+)$}{$dir/$1};
 	open(my $comment, '>', "$out.extra");
-	foreach my $ptr ( @{ $zone_has_ptr->{$zone} } ) {
+	foreach my $ptr ( @{ $zone_extra_ptr->{$zone} } ) {
 		print $comment "$ptr\n";
 	}
 	close($comment);
