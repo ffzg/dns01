@@ -97,11 +97,11 @@ $external_zone_regex =~ s/\./\\./g;
 warn "# local_zone_regex=$local_zone_regex\n# external_zone_regex=$external_zone_regex\n" if $debug;
 
 my @nsupdate_delete;
-
+my $zone_missing_ptr;
 
 foreach my $name ( sort keys %{ $zone->{A} } ) {
 
-	next if $name eq ''; # localhost.
+	next if $name eq '' || $name =~ m/^localhost/; # localhost.
 
 	foreach my $ip ( @{ $zone->{A}->{$name} } ) {
 		my $ptr = join('.', reverse split(/\./,$ip)) . '.in-addr.arpa.';
@@ -185,9 +185,12 @@ foreach my $name ( sort keys %{ $zone->{A} } ) {
 		} else {
 			print "MISSING $ptr IN PTR $name\n";
 			$stat->{missing}->{ptr}++;
+			push @{ $zone_missing_ptr->{$ptr} }, $name
 		}
 	}
 }
+
+warn "# zone_missing_ptr = ",dump( $zone_missing_ptr ) if $debug;
 
 # FIXME check all ips from $lease, not only in zone files
 
@@ -270,6 +273,22 @@ foreach my $zone ( keys %$zone_extra_ptr ) {
 	system "./zone-comment.pl $zone_in_file->{$zone} $out.extra > $out";
 	warn "# commented $in $out ", -s $out, " bytes\n";
 }
+
+my $file_missing_ptr = '/tmp/zone.missing.ptr';
+open(my $fh, '>', $file_missing_ptr );
+foreach my $ptr ( keys %{ $zone_missing_ptr } ) {
+	my @names = @{ $zone_missing_ptr->{$ptr} };
+	if ( $ptr =~ m/$zone_regex/ ) {
+		foreach my $name ( @names ) {
+			print $fh "$ptr $name\n";
+		}
+	} else {
+		warn "# SKIP PTR $ptr @names not in our zone\n" if $debug;
+	}
+}
+close($fh);
+
+warn "# created $file_missing_ptr ", -s $file_missing_ptr, "\n";
 
 # dump static IP addresses
 open(my $ips, '>', '/tmp/zone.ips.static');
