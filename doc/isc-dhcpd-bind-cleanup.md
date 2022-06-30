@@ -42,6 +42,7 @@ which does a lot, so let's step through everything.
 - generate `/tmp/zone.extra.ptr` with extra PTR records
 - generate directory `/tmp/zone.commented` with commented zones based on data above
 - generate `/tmp/zone.ips.static` with list of static IPs
+- generate `/tmp/zone.missing.ptr` with comments to insert them into reverse files
 
 
 
