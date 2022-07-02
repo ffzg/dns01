@@ -276,12 +276,12 @@ foreach my $zone ( keys %$zone_extra_ptr ) {
 
 my $file_missing_ptr = '/tmp/zone.missing.ptr';
 my $zone_missing_ptr_by_zone;
-foreach my $ptr ( keys %{ $zone_missing_ptr } ) {
+foreach my $ptr ( sort keys %{ $zone_missing_ptr } ) {
 	my @names = @{ $zone_missing_ptr->{$ptr} };
 	if ( $ptr =~ m/$zone_regex/ ) {
 		my $zone = $1;
 		foreach my $name ( @names ) {
-			push @{ $zone_missing_ptr_by_zone->{$zone} }, "$ptr IN PTR $name";
+			push @{ $zone_missing_ptr_by_zone->{$zone} }, "$ptr\tIN\tPTR\t$name";
 		}
 	} else {
 		warn "# SKIP PTR $ptr @names not in our zone\n" if $debug;
