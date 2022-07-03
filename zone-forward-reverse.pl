@@ -95,6 +95,8 @@ my $external_zone_regex = '(' . join('|', keys %{ $zone->{_subdomain_ns} } ) . '
 $local_zone_regex =~ s/\./\\./g;
 $external_zone_regex =~ s/\./\\./g;
 
+$external_zone_regex = undef if $external_zone_regex eq '()$'; # cleanup if empty
+
 warn "# local_zone_regex=$local_zone_regex\n# external_zone_regex=$external_zone_regex\n" if $debug;
 
 my @nsupdate_delete;
@@ -217,7 +219,7 @@ foreach my $ptr ( sort keys %{ $zone->{PTR} } ) {
 	foreach my $name ( @{ $zone->{PTR}->{$ptr} } ) {
 		next if $name eq 'localhost.';
 
-		if ( $name =~ m/$external_zone_regex/ || $name !~ m/$local_zone_regex/ ) {
+		if ( $external_zone_regex && $name =~ m/$external_zone_regex/ || $name !~ m/$local_zone_regex/ ) {
 			print "EXTERNAL PTR $name\n";
 			push @{ $stat->{external_ptr} }, $name;
 			next;
