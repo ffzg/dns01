@@ -43,31 +43,33 @@ foreach my $zone ( sort keys %$update ) {
 		warn "# created /tmp/nsupdate.zone.$zone\n";
 	}
 
+	if ( my $ip = zone_local_ip( $zone ) ) {
+		print "server $ip\n";
+		print "local $ip\n";
+	}
+
 	print "zone $zone\n";
 
 	my ( $key_name, $secret ) = BIND::Config::zone_key_name_secret( $zone );
 	# key [hmac:] {keyname} {secret}
 	print "key $key_name $secret\n";
-
-	if ( my $ip = zone_local_ip( $zone ) ) {
-		print "server $ip\n";
-		print "local $ip\n";
-	}
+	print "send\n";
 
 	my $count = 0;
 
 	foreach my $name ( @{ $update->{$zone} } ) {
 		if ( $zone =~ m/\.arpa$/ ) {
 			print "delete $name PTR\n";
+			print "send\n";
 			$count++;
 		} else {
 			print "delete $name A\n";
+			print "send\n";
 			print "delete $name TXT\n";
+			print "send\n";
 			$count++;
 		}
-		print "send\n" if $count % 10 == 0; # prevent dns_request_createvia: ran out of space
 	}
 
-	print "send\n";
 }
 
