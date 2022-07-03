@@ -46,6 +46,7 @@ foreach my $zone_name_file ( @zones ) {
 	my ( $zone_name, $zone_file ) = @$zone_name_file;
 
 	$zone_in_file->{$zone_name} = $zone_file;
+	$origin = $zone_name;
 
 	open(my $fh, '<', $zone_file);
 	while(<$fh>) {
