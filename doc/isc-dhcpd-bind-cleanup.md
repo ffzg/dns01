@@ -44,5 +44,27 @@ which does a lot, so let's step through everything.
 - generate `/tmp/zone.ips.static` with list of static IPs
 - generate `/tmp/zone.missing.ptr` with comments to insert them into reverse files
 
+Running `./zone-forward-reverse.pl` will produce a lot of output will all checks
+which you can review and create files which we can use to cleanup rest of files.
 
+If you want to see even more debug output and inspect how scripts detects
+what it does you can use `DEBUG=1` to produce more output to `STDERR`
 
+```
+DEBUG=1 ./zone-forward-reverse.pl 2>&1 | less
+```
+
+## removing extra dynamic mappings
+
+To remove dynamic mapping there is [nsupdate-delete.pl](/nsupdate-delete.pl) which will produce
+commands for `nsupdate` to cleanup zone.
+
+```
+./nsupdate-delete.pl /tmp/nsupdate.delete | nsupdate -v && /usr/sbin/rndc sync -clean
+```
+
+If you want to produce commands for `nsupdate` for each zone, you can add `FILE=1`
+
+```
+FILE=1 ./nsupdate-delete.pl /tmp/nsupdate.delete
+```
