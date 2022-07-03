@@ -245,6 +245,8 @@ open(my $fh, '>', '/tmp/nsupdate.delete');
 print $fh "$_\n" foreach @nsupdate_delete;
 close($fh);
 
+print "# created /tmp/nsupdate.delete ", -s "/tmp/nsupdate.delete", " bytes\n";
+
 my $zone_regex = '(' . join('|', keys %$zone_in_file) . ')';
 my $zone_extra_ptr;
 
@@ -261,6 +263,8 @@ close($fh);
 
 warn "# zone_extra_ptr = ",dump( $zone_extra_ptr ), "\n" if $debug;
 
+print "# created /tmp/zone.extra.ptr ", -s "/tmp/zone.extra.ptr", " bytes\n";
+
 my $dir = '/tmp/zone.commented';
 mkdir $dir unless -e $dir;
 foreach my $zone ( keys %$zone_extra_ptr ) {
@@ -274,7 +278,7 @@ foreach my $zone ( keys %$zone_extra_ptr ) {
 	}
 	close($comment);
 	system "./zone-comment.pl $zone_in_file->{$zone} $out.extra > $out";
-	warn "# commented $in $out ", -s $out, " bytes\n";
+	print "# commented $in $out ", -s $out, " bytes\n";
 }
 
 my $file_missing_ptr = '/tmp/zone.missing.ptr';
@@ -299,9 +303,12 @@ foreach my $zone ( keys %{ $zone_missing_ptr_by_zone } ) {
 }
 close($fh);
 
-warn "# created $file_missing_ptr ", -s $file_missing_ptr, "\n";
+print "# created $file_missing_ptr ", -s $file_missing_ptr, " bytes\n";
 
 # dump static IP addresses
 open(my $ips, '>', '/tmp/zone.ips.static');
 print $ips join("\n", keys %{ $zone->{_ip2name}->{static} } );
 close($ips);
+
+print "# created /tmp/zone.ips.static ", -s "/tmp/zone.ips.static", " bytes\n";
+
