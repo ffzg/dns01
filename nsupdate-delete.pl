@@ -13,7 +13,7 @@ use Data::Dump qw(dump);
 
 my $debug = $ENV{DEBUG} || 0;
 
-$|=1 if $debug;
+$|=1; # if $debug;
 
 check_config( "/etc/bind/named.conf" );
 
@@ -36,10 +36,11 @@ while(<>) {
 
 warn "# update = ",dump($update) if $debug;
 
-foreach my $zone ( keys %$update ) {
+foreach my $zone ( sort keys %$update ) {
 
 	if ( $ENV{FILE} ) {
 		open(STDOUT, '>', "/tmp/nsupdate.zone.$zone");
+		warn "# created /tmp/nsupdate.zone.$zone\n";
 	}
 
 	print "zone $zone\n";
