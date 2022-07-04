@@ -116,7 +116,12 @@ sub check_config {
 			$type = $_[1];
 		}
 		if ( $in_match_clients ) {
-			push @match_clients_ips, $_[0];
+			my $ip = $_[0];
+			if ( $ip eq '"any"' ) {
+				push @match_clients_ips, '0.0.0.0/0';
+			} else {
+				push @match_clients_ips, $_[0];
+			}
 		}
 
 	} );
