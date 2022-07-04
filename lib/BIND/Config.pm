@@ -83,6 +83,7 @@ sub check_config {
 		print "# set_close_block_handler [$indent] ", join( "|", @_ ), "\n" if $debug > 1;
 		if ( $in_match_clients ) {
 			$in_match_clients = 0;
+			$local_ip = undef;
 			my $local_matcher = subnet_matcher @match_clients_ips;
 			foreach my $ip ( @local_ips ) {
 				if ( $local_matcher->( $ip ) ) {
@@ -91,6 +92,7 @@ sub check_config {
 					last;
 				}
 			}
+			die "can't find local_ip for ", dump( \@match_clients_ips ), " in local ips ", dump( \@local_ips ) unless $local_ip;
 		}
 	} );
 	$parser->set_statement_handler( sub {
