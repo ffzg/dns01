@@ -12,10 +12,13 @@ my $debug = $ENV{DEBUG} || 0;
 
 $|=1 if $debug;
 
+my $stat;
 my $lease = parse_leases( '/var/lib/dhcp/dhcpd.leases' );
 
 foreach my $ip ( sort keys %$lease ) {
 	my $data = $lease->{$ip};
+
+	$stat->{ $data->{'binding state'} }++;
 
 	next if ( ! @ARGV && $data->{'binding state'} ne 'active' ); # FIXME
 	warn "# ",dump($data) if $debug;
@@ -29,3 +32,5 @@ foreach my $ip ( sort keys %$lease ) {
 				'ddns-rev-name',
 	)), "\n";
 }
+
+print "# binding state = ",dump($stat);
