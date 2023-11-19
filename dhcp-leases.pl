@@ -8,8 +8,19 @@ use Data::Dump qw(dump);
 use lib './lib';
 use DHCPD::Leases qw(parse_leases);
 use HTTP::Date;
+use Getopt::Long;
 
 my $debug = $ENV{DEBUG} || 0;
+my $all;
+my $long;
+
+GetOptions(
+#"length=i" => \$length,    # numeric
+#"file=s"   => \$data,      # string
+"debug"  => \$debug,  # flag
+"all"  => \$all,
+"long"  => \$long,
+) or die "$0 arguments @ARGV error";
 
 $|=1 if $debug;
 
@@ -21,13 +32,13 @@ foreach my $ip ( sort keys %$lease ) {
 
 	$stat->{ $data->{'binding state'} }++;
 
-	next if ( ! @ARGV && $data->{'binding state'} ne 'active' ); # FIXME
+	next if ( ! $long && ! $all && $data->{'binding state'} ne 'active' ); # FIXME
 	warn "# ",dump($data) if $debug;
 	my $starts_t = str2time $data->{'starts'};
 	my $ends_t = str2time $data->{'ends'};
 	my $d_t = $ends_t - $starts_t;
 	$data->{d_t} = $d_t;
-	print "XX lease time $d_t ",dump($data) if $debug && $d_t > 600;
+	print "XX lease time $d_t ",dump($data) if $long && $d_t > 600;
 	print join(' ', map { defined $data->{$_} ? $data->{$_} : '?' } (
 				'lease',
 				'hardware ethernet',
