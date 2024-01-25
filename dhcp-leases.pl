@@ -36,7 +36,7 @@ foreach my $ip ( sort keys %$lease ) {
 	warn "# ",dump($data) if $debug;
 	my $starts_t = str2time $data->{'starts'};
 	my $ends_t = str2time $data->{'ends'};
-	my $d_t = $ends_t - $starts_t;
+	my $d_t = $ends_t ? $ends_t - $starts_t : -1;
 	$data->{d_t} = $d_t;
 	print "XX lease time $d_t ",dump($data) if $long && $d_t > 600;
 	print join(' ', map { defined $data->{$_} ? $data->{$_} : '?' } (
