@@ -31,6 +31,8 @@ foreach my $ip ( sort keys %$lease ) {
 	my $data = $lease->{$ip};
 
 	$stat->{ $data->{'binding state'} }++;
+	my $ip_24 = $ip; $ip_24 =~ s/\.\d+$//;
+	$stat->{ 'ips' }->{$ip_24}->{ $data->{'binding state'} }++;
 
 	next if ( ! $long && ! $all && $data->{'binding state'} ne 'active' ); # FIXME
 	warn "# ",dump($data) if $debug;
