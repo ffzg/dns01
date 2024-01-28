@@ -38,8 +38,7 @@ my @netmasks;
 sub parseconfig {
     my($configfile) = @_;
 
-    warn "# parseconfig ", $configfile;
-    my $DEBUG = 1;
+    warn "# parseconfig ", $configfile if $debug;
     my %limits;
 
     local(*IN);
@@ -49,24 +48,24 @@ sub parseconfig {
     LINE: while(<IN>) {
 	if(/subnet\s+((?:\d+\.){3}\d+)\s+netmask\s+((?:\d+\.){3}\d+)/ && ! /^\s*#/) {
 	    $name = "$1 $2";
-	    print "# DEBUG: Found a subnet: $name\n" if $DEBUG;
+	    print "# DEBUG: Found a subnet: $name\n" if $debug;
 	    $stat->{subnet}->{$1} = $2;
 	    push @netmasks, Net::Netmask->new( $1, $2 );
 	}
 	if($name && /^\}$/) {
             if(!exists $limits{$name}) {
-                print "# DEBUG: End of subnet... NO RANGE?\n" if $DEBUG;
+                print "# DEBUG: End of subnet... NO RANGE?\n" if $debug;
             }
 	    $name = "";
 	}
 	if($name && /range\s+((?:\d+\.){3}\d+)\s+((?:\d+\.){3}\d+)/) {
-	    print "# DEBUG: range $1 -> $2\n" if $DEBUG;
+	    print "# DEBUG: range $1 -> $2\n" if $debug;
 	    $limits{$name} += &rangecount($1, $2);
-	    print "# DEBUG: limit for $name is " . $limits{$name} . "\n" if $DEBUG;
+	    print "# DEBUG: limit for $name is " . $limits{$name} . "\n" if $debug;
 	}
 	if(/^include \"([^\"]+)\";/) {
 	    my $includefile = $1;
-	    print "# DEBUG: found included file: $includefile\n" if $DEBUG;
+	    print "# DEBUG: found included file: $includefile\n" if $debug;
 	    if(!-f $includefile) {
 		$includefile = dirname($CONFIGFILE) . "/" . $includefile;
 		if(!-f $includefile) {
